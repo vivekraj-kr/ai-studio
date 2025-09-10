@@ -3,17 +3,13 @@
 import { GenerateButtonProps } from '../types';
 import Button from './ui/Button';
 
-interface ExtendedGenerateButtonProps extends GenerateButtonProps {
-  error?: string | null;
-}
-
 const GenerateButton = ({ 
   isGenerating, 
   onGenerate, 
   onAbort, 
   disabled,
   error
-}: ExtendedGenerateButtonProps) => {
+}: GenerateButtonProps) => {
   return (
     <div className="space-y-4">
       <Button
