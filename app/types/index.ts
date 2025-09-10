@@ -59,4 +59,5 @@ export interface GenerateButtonProps {
 export interface HistoryPanelProps {
   history: Generation[];
   onRestoreGeneration: (generation: Generation) => void;
+  onClearHistory: () => void;
 } 

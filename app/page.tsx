@@ -1,12 +1,14 @@
 'use client';
 
-import { useState } from 'react';
-import { StyleOption } from './types';
+import { useState, useEffect } from 'react';
+import { StyleOption, Generation } from './types';
+import { loadHistory, addToHistory, clearHistory } from './lib/storage';
 import ImageUpload from './components/ImageUpload';
 import PromptInput from './components/PromptInput';
 import StyleSelector from './components/StyleSelector';
 import LiveSummary from './components/LiveSummary';
 import GenerateButton from './components/GenerateButton';
+import HistoryPanel from './components/HistoryPanel';
 
 export default function Home() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -14,6 +16,13 @@ export default function Home() {
   const [prompt, setPrompt] = useState<string>('');
   const [selectedStyle, setSelectedStyle] = useState<StyleOption>('editorial');
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
+  const [history, setHistory] = useState<Generation[]>([]);
+
+  // Load history from localStorage on mount
+  useEffect(() => {
+    const savedHistory = loadHistory();
+    setHistory(savedHistory);
+  }, []);
 
   const handleFileSelect = (file: File | null) => {
     setSelectedFile(file);
@@ -37,23 +46,43 @@ export default function Home() {
     }
     
     setIsGenerating(true);
-    // TODO: Implement API call logic
-    console.log('Starting generation with:', {
-      imagePreview,
-      prompt,
-      style: selectedStyle
-    });
     
-    // Temporary simulation - will be replaced with actual API call
+    // Simulate API call - will be replaced with actual implementation
     setTimeout(() => {
       setIsGenerating(false);
-      console.log('Generation completed (simulated)');
+      
+      // Create mock generation result
+      const newGeneration: Generation = {
+        id: Date.now().toString(),
+        imageUrl: imagePreview, // In real app, this would be the generated image
+        prompt,
+        style: selectedStyle,
+        createdAt: new Date().toISOString()
+      };
+      
+      // Add to history and update state
+      const updatedHistory = addToHistory(newGeneration);
+      setHistory(updatedHistory);
     }, 3000);
   };
 
   const handleAbort = () => {
     setIsGenerating(false);
-    console.log('Generation aborted');
+  };
+
+  const handleRestoreGeneration = (generation: Generation) => {
+    // Restore the generation settings to current inputs
+    setImagePreview(generation.imageUrl);
+    setPrompt(generation.prompt);
+    setSelectedStyle(generation.style as StyleOption);
+    
+    // Note: We can't restore the actual file, only the preview
+    setSelectedFile(null);
+  };
+
+  const handleClearHistory = () => {
+    clearHistory();
+    setHistory([]);
   };
 
   const canGenerate = Boolean(imagePreview && prompt.trim());
@@ -107,9 +136,11 @@ export default function Home() {
                 disabled={!canGenerate}
               />
               
-              <div className="p-4 border border-foreground/20 rounded-lg">
-                <p className="text-foreground/60">History Panel component coming soon...</p>
-              </div>
+              <HistoryPanel
+                history={history}
+                onRestoreGeneration={handleRestoreGeneration}
+                onClearHistory={handleClearHistory}
+              />
             </div>
           </div>
         </div>

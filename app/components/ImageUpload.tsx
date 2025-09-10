@@ -14,11 +14,13 @@ const ImageUpload = ({
   const [isDragOver, setIsDragOver] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string>('');
+  const [wasDownscaled, setWasDownscaled] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileProcess = async (file: File) => {
     setIsProcessing(true);
     setError('');
+    setWasDownscaled(false);
     
     try {
       const result = await processImageFile(file);
@@ -26,7 +28,7 @@ const ImageUpload = ({
       onImagePreview(result.preview);
       
       if (result.isDownscaled) {
-        console.log('Image was downscaled for optimal processing');
+        setWasDownscaled(true);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to process image');
@@ -72,6 +74,7 @@ const ImageUpload = ({
     onFileSelect(null);
     onImagePreview('');
     setError('');
+    setWasDownscaled(false);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -182,6 +185,11 @@ const ImageUpload = ({
             <div className="text-sm text-foreground/60">
               <p><strong>File:</strong> {selectedFile.name}</p>
               <p><strong>Size:</strong> {(selectedFile.size / (1024 * 1024)).toFixed(1)} MB</p>
+              {wasDownscaled && (
+                <p className="text-blue-600 mt-1">
+                  <strong>Note:</strong> Image was resized for optimal processing
+                </p>
+              )}
             </div>
           )}
         </div>
