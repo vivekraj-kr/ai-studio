@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import { GenerateButtonProps } from '../types';
 import Button from './ui/Button';
 
@@ -8,71 +7,28 @@ const GenerateButton = ({
   isGenerating, 
   onGenerate, 
   onAbort, 
-  disabled 
+  disabled,
+  error
 }: GenerateButtonProps) => {
-  const [retryCount, setRetryCount] = useState(0);
-
-  const handleGenerate = () => {
-    setRetryCount(0);
-    onGenerate();
-  };
-
-  const getButtonText = () => {
-    if (isGenerating) {
-      if (retryCount > 0) {
-        return `Retrying... (Attempt ${retryCount + 1})`;
-      }
-      return 'Generating...';
-    }
-    
-    if (retryCount > 0) {
-      return `Retry Generation (${retryCount} failed)`;
-    }
-    
-    return 'Generate Image';
-  };
-
-  const getButtonVariant = () => {
-    if (isGenerating) return 'gradient';
-    if (retryCount > 0) return 'purple';
-    return 'gradient';
-  };
-
   return (
     <div className="space-y-4">
-      <div className="space-y-3">
-        <Button
-          onClick={handleGenerate}
-          disabled={disabled || isGenerating}
-          loading={isGenerating}
-          variant={getButtonVariant()}
-          size="lg"
-          className="w-full"
-        >
-          {getButtonText()}
-        </Button>
-
-        {isGenerating && (
-          <Button
-            onClick={onAbort}
-            variant="secondary"
-            size="sm"
-            className="w-full"
-          >
-            Cancel Generation
-          </Button>
-        )}
-      </div>
+      <Button
+        onClick={onGenerate}
+        disabled={disabled || isGenerating}
+        loading={isGenerating}
+        variant="gradient"
+        size="lg"
+        className="w-full"
+      >
+        {isGenerating ? 'Generating...' : 'Generate Image'}
+      </Button>
 
       {/* Generation Status */}
       <div className="text-center">
         {isGenerating ? (
           <div className="space-y-2">
             <p className="text-sm text-foreground/60">
-              {retryCount > 0 
-                ? `Attempting retry ${retryCount + 1} of 3...` 
-                : 'Processing your request...'
-              }
+              Processing your request...
             </p>
             <div className="flex items-center justify-center space-x-2">
               <div className="w-2 h-2 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full animate-pulse" />
@@ -80,9 +36,9 @@ const GenerateButton = ({
               <div className="w-2 h-2 bg-gradient-to-r from-indigo-500 to-blue-500 rounded-full animate-pulse delay-150" />
             </div>
           </div>
-        ) : retryCount > 0 ? (
-          <p className="text-sm text-foreground/60">
-            Previous attempt failed. You can try again.
+        ) : error ? (
+          <p className="text-sm text-red-600">
+            {error}
           </p>
         ) : disabled ? (
           <p className="text-sm text-foreground/40">
@@ -95,11 +51,11 @@ const GenerateButton = ({
         )}
       </div>
 
-      {/* Retry Information */}
-      {retryCount > 0 && !isGenerating && (
-        <div className="p-3 bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-xl">
+      {/* Error Information */}
+      {error && !isGenerating && (
+        <div className="p-3 bg-gradient-to-r from-red-50 to-red-100 border border-red-200 rounded-xl">
           <div className="flex items-start space-x-2">
-            <div className="flex-shrink-0 w-5 h-5 text-yellow-600">
+            <div className="flex-shrink-0 w-5 h-5 text-red-600">
               <svg fill="currentColor" viewBox="0 0 20 20">
                 <path 
                   fillRule="evenodd" 
@@ -109,11 +65,11 @@ const GenerateButton = ({
               </svg>
             </div>
             <div>
-              <p className="text-sm font-medium text-yellow-800">
+              <p className="text-sm font-medium text-red-800">
                 Generation Failed
               </p>
-              <p className="text-sm text-yellow-700">
-                The AI model might be overloaded. We'll automatically retry with exponential backoff.
+              <p className="text-sm text-red-700">
+                {error}. Try again.
               </p>
             </div>
           </div>

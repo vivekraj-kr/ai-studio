@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { StyleOption, Generation } from './types';
-import { loadHistory, addToHistory, clearHistory } from './lib/storage';
+import { loadHistory, clearHistory } from './lib/storage';
+import { useGeneration } from './hooks/useGeneration';
 import ImageUpload from './components/ImageUpload';
 import PromptInput from './components/PromptInput';
 import StyleSelector from './components/StyleSelector';
@@ -15,8 +16,18 @@ export default function Home() {
   const [imagePreview, setImagePreview] = useState<string>('');
   const [prompt, setPrompt] = useState<string>('');
   const [selectedStyle, setSelectedStyle] = useState<StyleOption>('editorial');
-  const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [history, setHistory] = useState<Generation[]>([]);
+
+  // Use custom hook for generation
+  const { 
+    isGenerating, 
+    error, 
+    generate 
+  } = useGeneration((newGeneration) => {
+    // Success callback - update history
+    const updatedHistory = [newGeneration, ...history].slice(0, 5);
+    setHistory(updatedHistory);
+  });
 
   // Load history from localStorage on mount
   useEffect(() => {
@@ -41,42 +52,17 @@ export default function Home() {
   };
 
   const handleGenerate = () => {
-    if (!imagePreview || !prompt.trim()) {
+    if (!selectedFile || !prompt.trim()) {
       return;
     }
     
-    setIsGenerating(true);
-    
-    // Simulate API call - will be replaced with actual implementation
-    setTimeout(() => {
-      setIsGenerating(false);
-      
-      // Create mock generation result
-      const newGeneration: Generation = {
-        id: Date.now().toString(),
-        imageUrl: imagePreview, // In real app, this would be the generated image
-        prompt,
-        style: selectedStyle,
-        createdAt: new Date().toISOString()
-      };
-      
-      // Add to history and update state
-      const updatedHistory = addToHistory(newGeneration);
-      setHistory(updatedHistory);
-    }, 3000);
-  };
-
-  const handleAbort = () => {
-    setIsGenerating(false);
+    generate(selectedFile, prompt, selectedStyle);
   };
 
   const handleRestoreGeneration = (generation: Generation) => {
-    // Restore the generation settings to current inputs
     setImagePreview(generation.imageUrl);
     setPrompt(generation.prompt);
     setSelectedStyle(generation.style as StyleOption);
-    
-    // Note: We can't restore the actual file, only the preview
     setSelectedFile(null);
   };
 
@@ -85,8 +71,7 @@ export default function Home() {
     setHistory([]);
   };
 
-  const canGenerate = Boolean(imagePreview && prompt.trim());
-
+  const canGenerate = Boolean(selectedFile && imagePreview && prompt.trim() && !isGenerating);
   return (
     <div className="min-h-screen bg-background">
       <main className="container mx-auto px-4 py-8">
@@ -132,8 +117,9 @@ export default function Home() {
               <GenerateButton
                 isGenerating={isGenerating}
                 onGenerate={handleGenerate}
-                onAbort={handleAbort}
+                onAbort={() => {}}
                 disabled={!canGenerate}
+                error={error}
               />
               
               <HistoryPanel

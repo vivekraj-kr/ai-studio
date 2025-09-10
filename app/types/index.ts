@@ -54,6 +54,7 @@ export interface GenerateButtonProps {
   onGenerate: () => void;
   onAbort: () => void;
   disabled: boolean;
+  error?: string | null;
 }
 
 export interface HistoryPanelProps {
